@@ -15,7 +15,7 @@
 */
 
 #include <hwclayer.h>
-
+#include <libsync.h>
 #include <cmath>
 
 #include <hwcutils.h>
@@ -162,11 +162,18 @@ void HwcLayer::SetVisibleRegion(const HwcRegion& visible_region) {
 
 void HwcLayer::SetReleaseFence(int32_t fd) {
   if (release_fd_ > 0) {
-    close(release_fd_);
-    release_fd_ = -1;
+    if (fd != -1) {
+      int ret = sync_accumulate("iahwc_release_layerfence", &release_fd_, fd);
+      if (ret) {
+        ETRACE("Unable to merge layer release fence");
+        release_fd_ = -1;
+      }
+    } else {
+      release_fd_ = -1;
+    }
+  } else {
+    release_fd_ = fd;
   }
-
-  release_fd_ = fd;
 }
 
 int32_t HwcLayer::GetReleaseFence() {

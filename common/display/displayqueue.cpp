@@ -536,6 +536,7 @@ bool DisplayQueue::QueueUpdate(std::vector<HwcLayer*>& source_layers,
   if (tracker.IgnoreUpdate()) {
     return true;
   }
+  source_layers_ = &source_layers;
 
   size_t size = source_layers.size();
   size_t previous_size = in_flight_layers_.size();
@@ -953,9 +954,22 @@ void DisplayQueue::PresentClonedCommit(DisplayQueue* queue) {
 
   std::vector<OverlayLayer> layers;
   int add_index = -1;
+  int remove_index = -1;
+  int z_order = 0;
+  int previous_size = in_flight_layers_.size();
   for (const DisplayPlaneState& previous_plane : source_planes) {
     layers.emplace_back();
+
     OverlayLayer& layer = layers.back();
+    OverlayLayer* previous_layer = NULL;
+
+    if (previous_size > z_order) {
+      previous_layer = &(in_flight_layers_.at(z_order));
+    } else if (add_index == -1) {
+      add_index = z_order;
+    }
+    z_order++;
+
     HwcRect<int> display_frame =
         previous_plane.GetOverlayLayer()->GetDisplayFrame();
     if (scaling_tracker_.scaling_state_ == ScalingTracker::kNeedsScaling) {
@@ -974,13 +988,28 @@ void DisplayQueue::PresentClonedCommit(DisplayQueue* queue) {
 
     layer.CloneLayer(previous_plane.GetOverlayLayer(), display_frame,
                      resource_manager_.get(), layers.size() - 1, fb_manager_);
+
+    if (add_index != 0 && layer.IsVideoLayer()) {
+      if (previous_layer && !previous_layer->IsVideoLayer() ||
+          !previous_layer) {
+        add_index = 0;
+        continue;
+      }
+    }
+    if (previous_layer &&
+        previous_layer->IsCursorLayer() != layer.IsCursorLayer()) {
+      if (remove_index == -1)
+        remove_index = previous_layer->GetZorder();
+      if (add_index == -1)
+        add_index = layer.GetZorder();
+    }
   }
 
   bool test_commit = false;
   bool render_layers = false;
   bool validate_layers = last_commit_failed_update_ ||
                          queue->needs_clone_validation_ ||
-                         previous_plane_state_.empty();
+                         previous_plane_state_.empty() || (add_index == 0);
   if (previous_plane_state_.size() != source_planes.size())
     validate_layers = true;
 
@@ -992,8 +1021,16 @@ void DisplayQueue::PresentClonedCommit(DisplayQueue* queue) {
     // if not continue showing the current buffer.
     bool commit_checked = false;
     bool needs_plane_validation = false;
-    GetCachedLayers(layers, -1, &current_composition_planes, &render_layers,
-                    &can_ignore_commit, &needs_plane_validation,
+    if (previous_size > layers.size()) {
+      if (remove_index == -1) {
+        remove_index = layers.size();
+      } else if (add_index != -1) {
+        remove_index = std::min(add_index, remove_index);
+      }
+    }
+
+    GetCachedLayers(layers, remove_index, &current_composition_planes,
+                    &render_layers, &can_ignore_commit, &needs_plane_validation,
                     &validate_layers, &add_index);
     if (add_index == 0) {
       validate_layers = true;
@@ -1134,6 +1171,9 @@ void DisplayQueue::PresentClonedCommit(DisplayQueue* queue) {
 
   if (fence > 0) {
     kms_fence_ = fence;
+    std::vector<HwcLayer*>* source_layers = queue->GetSourceLayers();
+    if (source_layers != NULL)
+      SetReleaseFenceToLayers(kms_fence_, *source_layers);
   }
 }
 
