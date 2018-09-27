@@ -445,6 +445,10 @@ void DrmDisplayManager::IgnoreUpdates() {
   }
 }
 
+void DrmDisplayManager::setDrmMaster() {
+  drmSetMaster(fd_);
+}
+
 void DrmDisplayManager::HandleLazyInitialization() {
   spin_lock_.lock();
   if (release_lock_) {
