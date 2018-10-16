@@ -24,6 +24,7 @@
 #include <hwcdefs.h>
 #include <nativebufferhandler.h>
 
+#include "framebuffermanager.h"
 #include "hwctrace.h"
 #include "hwcutils.h"
 #include "resourcemanager.h"
@@ -115,6 +116,12 @@ void DrmBuffer::InitializeFromNativeHandle(
 
 const ResourceHandle& DrmBuffer::GetGpuResource(GpuDisplay egl_display,
                                                 bool external_import) {
+  if (METADATA(usage_) == kLayerProtected) {
+    // Mesa should not supported protected buffer yet
+    ETRACE("HWC should not generate 3d resources for protected layer");
+    return image_;
+  }
+
 #if USE_GL
   if (image_.image_ == 0) {
     EGLImageKHR image = EGL_NO_IMAGE_KHR;

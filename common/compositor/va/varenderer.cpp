@@ -255,7 +255,7 @@ bool VARenderer::Draw(const MediaState& state, NativeSurface* surface) {
   }
 
   // Get Output Surface.
-  const OverlayLayer* layer_out = surface->GetLayer();
+  OverlayLayer* layer_out = surface->GetLayer();
   const MediaResourceHandle& out_resource =
       layer_out->GetBuffer()->GetMediaResource(
           va_display_, layer_out->GetSourceCropWidth(),
@@ -264,6 +264,13 @@ bool VARenderer::Draw(const MediaState& state, NativeSurface* surface) {
   if (surface_out == VA_INVALID_ID) {
     ETRACE("Failed to create Va Output Surface. \n");
     return false;
+  }
+
+  // Set the protected status to output layer if input layer is protected
+  if (state.layer_->IsProtected()) {
+    layer_out->SetProtected(true);
+  } else {
+    layer_out->SetProtected(false);
   }
 
   VARectangle surface_region;

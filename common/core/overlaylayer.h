@@ -173,7 +173,24 @@ struct OverlayLayer {
   }
 
   bool IsVideoLayer() const {
-    return type_ == kLayerVideo;
+    return (type_ == kLayerVideo || type_ == kLayerProtected);
+  }
+
+  bool IsSolidColor() const {
+    return type_ == kLayerSolidColor;
+  }
+
+  bool IsProtected() const {
+    return type_ == kLayerProtected;
+  }
+
+  void SetProtected(bool isProtected) {
+    if (isProtected && type_ == kLayerVideo)
+      type_ = kLayerProtected;
+    if (!isProtected && type_ == kLayerProtected)
+      type_ = kLayerVideo;
+    else
+      type_ = kLayerNormal;
   }
 
   // Returns true if we should prefer
@@ -184,7 +201,7 @@ struct OverlayLayer {
     // We set this to true only in case
     // of Media buffer. If this changes
     // in future, use appropriate checks.
-    return type_ == kLayerVideo;
+    return (type_ == kLayerVideo || type_ == kLayerProtected);
   }
 
   bool HasDimensionsChanged() const {

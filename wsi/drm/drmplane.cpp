@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 */
+#include <algorithm>
 
 #include "drmplane.h"
 
@@ -195,6 +196,12 @@ bool DrmPlane::Initialize(uint32_t gpu_fd, const std::vector<uint32_t>& formats,
     in_fence_fd_prop_.id = 0;
   }
 
+  ret = decryption_prop_.Initialize(gpu_fd, "DECRYPTION", plane_props);
+  if (!ret) {
+    ETRACE("Cound not get decryption property");
+    decryption_prop_.id = 0;
+  }
+
   // query and store supported modifiers for format, from in_formats
   // property
   uint64_t in_formats_prop_value = 0;
@@ -314,6 +321,16 @@ bool DrmPlane::UpdateProperties(drmModeAtomicReqPtr property_set,
                                         layer->GetSourceCropWidth() << 16) < 0;
     success |= drmModeAtomicAddProperty(property_set, id_, src_h_prop_.id,
                                         layer->GetSourceCropHeight() << 16) < 0;
+  }
+
+  if (decryption_prop_.id != 0) {
+    if (layer->IsProtected()) {
+      success |= drmModeAtomicAddProperty(property_set, id_,
+                                          decryption_prop_.id, 1) < 0;
+    } else {
+      success |= drmModeAtomicAddProperty(property_set, id_,
+                                          decryption_prop_.id, 0) < 0;
+    }
   }
 
   if (rotation_prop_.id) {

@@ -621,6 +621,34 @@ void GpuDevice::DisableHDCPSessionForAllDisplays() {
   }
 }
 
+void GpuDevice::SetPAVPSessionStatus(bool enabled, uint32_t pavp_session_id,
+                                     uint32_t pavp_instance_id) {
+  size_t size = total_displays_.size();
+  for (size_t i = 0; i < size; i++) {
+    total_displays_.at(i)->SetPAVPSessionStatus(enabled, pavp_session_id,
+                                                pavp_instance_id);
+  }
+}
+
+void GpuDevice::SetHDCPSRMForAllDisplays(const int8_t *SRM,
+                                         uint32_t SRMLength) {
+  size_t size = total_displays_.size();
+  for (size_t i = 0; i < size; i++) {
+    total_displays_.at(i)->SetHDCPSRM(SRM, SRMLength);
+  }
+}
+
+void GpuDevice::SetHDCPSRMForDisplay(uint32_t display, const int8_t *SRM,
+                                     uint32_t SRMLength) {
+  if (total_displays_.size() <= display) {
+    ETRACE("Tried to enable HDCP for invalid display %u \n", display);
+    return;
+  }
+
+  NativeDisplay *native_display = total_displays_.at(display);
+  native_display->SetHDCPSRM(SRM, SRMLength);
+}
+
 void GpuDevice::HandleRoutine() {
   bool update_ignored = false;
 
@@ -641,8 +669,6 @@ void GpuDevice::HandleRoutine() {
     } else {
       ITRACE("Successfully grabbed the hwc lock.");
     }
-
-    display_manager_->setDrmMaster();
 
     close(lock_fd_);
     lock_fd_ = -1;

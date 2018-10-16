@@ -23,6 +23,12 @@
 
 namespace hwcomposer {
 
+typedef enum {
+  Composition_Device = 0,
+  Composition_Client = 1,
+  Composition_SolidColor = 2,
+} HWCLayerCompositionType;
+
 struct HwcLayer {
   ~HwcLayer();
 
@@ -232,6 +238,14 @@ struct HwcLayer {
     return state_ & kZorderChanged;
   }
 
+  void SetLayerCompositionType(HWCLayerCompositionType type) {
+    composition_type_ = type;
+  }
+
+  HWCLayerCompositionType GetLayerCompositionType() {
+    return composition_type_;
+  }
+
   void SetLeftConstraint(int32_t left_constraint);
   int32_t GetLeftConstraint();
 
@@ -255,6 +269,14 @@ struct HwcLayer {
 
  private:
   void Validate();
+  void UpdateRenderingDamage(const HwcRect<int>& old_rect,
+                             const HwcRect<int>& newrect, bool same_rect);
+  /*
+   Get Rendering Damage from source surface damage
+   Apply transform here
+  */
+  void SufaceDamageTransfrom();
+
   void SetTotalDisplays(uint32_t total_displays);
   friend class VirtualDisplay;
   friend class PhysicalDisplay;
@@ -301,7 +323,7 @@ struct HwcLayer {
       kVisible | kSurfaceDamageChanged | kVisibleRegionChanged | kZorderChanged;
   int layer_cache_ = kLayerAttributesChanged | kDisplayFrameRectChanged;
   bool is_cursor_layer_ = false;
-  bool damage_dirty_ = true;
+  HWCLayerCompositionType composition_type_ = Composition_Device;
 };
 
 }  // namespace hwcomposer

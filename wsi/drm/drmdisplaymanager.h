@@ -63,8 +63,6 @@ class DrmDisplayManager : public HWCThread, public DisplayManager {
 
   void IgnoreUpdates() override;
 
-  void setDrmMaster() override;
-
   uint32_t GetFD() const override {
     return fd_;
   }
@@ -88,6 +86,7 @@ class DrmDisplayManager : public HWCThread, public DisplayManager {
   std::shared_ptr<DisplayHotPlugEventCallback> callback_ = NULL;
   std::unique_ptr<NativeBufferHandler> buffer_handler_;
   GpuDevice *device_ = NULL;
+  bool ignore_updates_ = false;
   int fd_ = -1;
   int hotplug_fd_ = -1;
   bool notify_client_ = false;

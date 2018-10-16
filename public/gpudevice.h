@@ -82,6 +82,12 @@ class GpuDevice : public HWCThread {
   // feature on all connected displays.
   void DisableHDCPSessionForAllDisplays();
 
+  void SetPAVPSessionStatus(bool enabled, uint32_t pavp_session_id,
+                            uint32_t pavp_instance_id);
+  void SetHDCPSRMForAllDisplays(const int8_t* SRM, uint32_t SRMLength);
+  void SetHDCPSRMForDisplay(uint32_t display, const int8_t* SRM,
+                            uint32_t SRMLength);
+
  private:
   enum InitializationType {
     kUnInitialized = 0,    // Nothing Initialized.

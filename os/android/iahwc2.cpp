@@ -620,6 +620,7 @@ HWC2::Error IAHWC2::HwcDisplay::PresentDisplay(int32_t *retire_fence) {
 
     switch (l.second.validated_type()) {
       case HWC2::Composition::Device:
+      case HWC2::Composition::SolidColor:
         z_map.emplace(std::make_pair(l.second.z_order(), &l.second));
         break;
       case HWC2::Composition::Client:
@@ -862,6 +863,7 @@ HWC2::Error IAHWC2::Hwc2Layer::SetLayerColor(hwc_color_t color) {
   // We only support Opaque colors so far.
   if (color.r == 0 && color.g == 0 && color.b == 0 && color.a == 255) {
     sf_type_ = HWC2::Composition::SolidColor;
+    hwc_layer_.SetLayerCompositionType(hwcomposer::Composition_SolidColor);
     return HWC2::Error::None;
   }
 
@@ -1244,6 +1246,28 @@ void IAHWC2::DisableHDCPSessionForDisplay(uint32_t display) {
 
 void IAHWC2::DisableHDCPSessionForAllDisplays() {
   device_.DisableHDCPSessionForAllDisplays();
+}
+
+void IAHWC2::SetPAVPSessionStatus(bool enabled, uint32_t papv_session_id,
+                                  uint32_t pavp_instance_id) {
+  device_.SetPAVPSessionStatus(enabled, papv_session_id, pavp_instance_id);
+}
+
+void IAHWC2::SetHDCPSRMForAllDisplays(const int8_t *SRM, uint32_t SRMLength) {
+  if (SRM == NULL) {
+    ETRACE("Error:HDCP Set NULL SRM");
+    return;
+  }
+  device_.SetHDCPSRMForAllDisplays(SRM, SRMLength);
+}
+
+void IAHWC2::SetHDCPSRMForDisplay(uint32_t display, const int8_t *SRM,
+                                  uint32_t SRMLength) {
+  if (SRM == NULL) {
+    ETRACE("Error:HDCP Set NULL SRM");
+    return;
+  }
+  device_.SetHDCPSRMForDisplay(display, SRM, SRMLength);
 }
 
 }  // namespace android

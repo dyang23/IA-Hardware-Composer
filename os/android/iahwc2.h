@@ -60,6 +60,13 @@ class IAHWC2 : public hwc2_device_t {
 
   void DisableHDCPSessionForAllDisplays();
 
+  void SetPAVPSessionStatus(bool enabled, uint32_t pavp_session_id,
+                            uint32_t pavp_instance_id);
+  void SetHDCPSRMForAllDisplays(const int8_t *SRM, uint32_t SRMLength);
+
+  void SetHDCPSRMForDisplay(uint32_t display, const int8_t *SRM,
+                            uint32_t SRMLength);
+
  public:
   class Hwc2Layer {
    public:

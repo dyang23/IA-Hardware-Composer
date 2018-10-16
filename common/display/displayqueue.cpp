@@ -426,6 +426,12 @@ void DisplayQueue::GetCachedLayers(const std::vector<OverlayLayer>& layers,
       const OverlayLayer* layer =
           &(layers.at(last_plane.GetSourceLayers().front()));
 
+      if (layer->IsSolidColor()) {
+        *force_full_validation = true;
+        *can_ignore_commit = false;
+        return;
+      }
+
       OverlayBuffer* buffer = layer->GetBuffer();
       if (buffer->GetFb() == 0) {
         buffer->CreateFrameBuffer();
@@ -542,6 +548,14 @@ void DisplayQueue::InitializeOverlayLayers(
     layer->SetReleaseFence(-1);
     if (!layer->IsVisible())
       continue;
+
+    // Discard protected video for tear down
+    if (state_ & kVideoDiscardProtected) {
+      if (layer->GetNativeHandle() != NULL &&
+          (layer->GetNativeHandle()->meta_data_.usage_ &
+           hwcomposer::kLayerProtected))
+        continue;
+    }
 
     layers.emplace_back();
     OverlayLayer* overlay_layer = &(layers.back());
@@ -723,7 +737,7 @@ bool DisplayQueue::QueueUpdate(std::vector<HwcLayer*>& source_layers,
   bool requested_video_effect = false;
   if (has_video_layer) {
     video_lock_.lock();
-    if(video_effect_changed_) {
+    if (video_effect_changed_) {
       idle_frame = false;
       video_effect_changed_ = false;
       validate_layers = true;
@@ -846,6 +860,27 @@ bool DisplayQueue::QueueUpdate(std::vector<HwcLayer*>& source_layers,
   // Handle any 3D Composition.
   if (render_layers) {
     compositor_.BeginFrame(disable_ovelays);
+
+    // if the plane is to be composited by GPU and requires GPU rotation,
+    // its source layers should be re-calculated the display frame (position)
+    DisplayPlaneState& last_plane = current_composition_planes.back();
+    bool is_gpu_rotation = (last_plane.GetRotationType() ==
+                            DisplayPlaneState::RotationType::kGPURotation);
+    if (last_plane.NeedsOffScreenComposition() &&
+        (plane_transform_ != kIdentity)) {
+      if (is_gpu_rotation) {
+        const std::vector<size_t>& source_layers = last_plane.GetSourceLayers();
+        for (const size_t& index : source_layers) {
+          OverlayLayer& layer = layers.at(index);
+          int width = display_plane_manager_->GetWidth();
+          int height = display_plane_manager_->GetHeight();
+          uint32_t transform = layer.GetPlaneTransform();
+          HwcRect<int> rect = RotateScaleRect(layer.GetDisplayFrame(), width,
+                                              height, transform);
+          layer.SetDisplayFrame(rect);
+        }
+      }
+    }
 
     std::vector<HwcRect<int>> layers_rects;
     for (size_t layer_index = 0; layer_index < size; layer_index++) {
@@ -1014,7 +1049,7 @@ void DisplayQueue::PresentClonedCommit(DisplayQueue* queue) {
                      resource_manager_.get(), layers.size() - 1, fb_manager_);
 
     if (add_index != 0 && layer.IsVideoLayer()) {
-      if (previous_layer && !previous_layer->IsVideoLayer() ||
+      if ((previous_layer && !previous_layer->IsVideoLayer()) ||
           !previous_layer) {
         add_index = 0;
         continue;
