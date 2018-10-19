@@ -446,7 +446,10 @@ void DrmDisplayManager::IgnoreUpdates() {
 }
 
 void DrmDisplayManager::setDrmMaster() {
-  drmSetMaster(fd_);
+  int ret = drmSetMaster(fd_);
+  if (ret) {
+    ETRACE("Failed to call drmSetMaster : %s", PRINTERROR());
+  }
 }
 
 void DrmDisplayManager::HandleLazyInitialization() {
