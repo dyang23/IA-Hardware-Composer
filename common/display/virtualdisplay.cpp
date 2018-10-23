@@ -198,6 +198,12 @@ bool VirtualDisplay::Present(std::vector<HwcLayer *> &source_layers,
 
       const HwcRect<int> &display_frame = layer->GetDisplayFrame();
       sf_handle = layer->GetNativeHandle();
+
+      if (NULL == sf_handle) {
+        ETRACE("layer->GetNativeHandle returns NULL, skip processing!");
+        continue;
+      }
+
       std::shared_ptr<OverlayBuffer> buffer(NULL);
       uint32_t gpu_fd = resource_manager_->GetNativeBufferHandler()->GetFd();
       uint32_t id = GetNativeBuffer(gpu_fd, sf_handle);
