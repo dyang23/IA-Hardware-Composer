@@ -25,6 +25,7 @@
 #include "hwctrace.h"
 #include "hwcutils.h"
 #include "overlaylayer.h"
+#include "drmdisplaymanager.h"
 
 namespace hwcomposer {
 
@@ -87,9 +88,9 @@ DrmPlane::~DrmPlane() {
 }
 
 bool DrmPlane::Initialize(uint32_t gpu_fd, const std::vector<uint32_t>& formats,
-                          bool use_modifier) {
+                          DrmDisplayManager* display_manager) {
   supported_formats_ = formats;
-  use_modifier_ = use_modifier;
+  display_manager_ = display_manager;
   uint32_t total_size = supported_formats_.size();
   for (uint32_t j = 0; j < total_size; j++) {
     uint32_t format = supported_formats_.at(j);
@@ -515,10 +516,11 @@ uint32_t DrmPlane::GetPreferredFormat() const {
 }
 
 uint64_t DrmPlane::GetPreferredFormatModifier() const {
-  if (!use_modifier_)
+  if (display_manager_ && display_manager_->GetConnectedPhysicalDisplayCount( ) >= 2) {
     return DRM_FORMAT_MOD_NONE;
-  else
-    return prefered_modifier_;
+  }
+  ETRACE("returning preferred modifier %8x", prefered_modifier_);
+  return prefered_modifier_;
 }
 
 void DrmPlane::SetInUse(bool in_use) {

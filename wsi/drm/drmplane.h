@@ -32,6 +32,7 @@
 namespace hwcomposer {
 
 class GpuDevice;
+class DrmDisplayManager;
 struct OverlayLayer;
 
 class DrmPlane : public DisplayPlane {
@@ -41,7 +42,7 @@ class DrmPlane : public DisplayPlane {
   ~DrmPlane();
 
   bool Initialize(uint32_t gpu_fd, const std::vector<uint32_t>& formats,
-                  bool use_modifer);
+                  DrmDisplayManager* dis_manager);
 
   bool UpdateProperties(drmModeAtomicReqPtr property_set, uint32_t crtc_id,
                         const OverlayLayer* layer,
@@ -138,7 +139,7 @@ class DrmPlane : public DisplayPlane {
   } format_mods;
   std::vector<format_mods> formats_modifiers_;
   std::shared_ptr<OverlayBuffer> buffer_ = NULL;
-  bool use_modifier_ = true;
+  DrmDisplayManager* display_manager_ = NULL;
 };
 
 }  // namespace hwcomposer
