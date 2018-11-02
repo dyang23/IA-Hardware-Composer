@@ -200,7 +200,8 @@ bool VirtualDisplay::Present(std::vector<HwcLayer *> &source_layers,
       sf_handle = layer->GetNativeHandle();
 
       if (NULL == sf_handle) {
-        ETRACE("layer->GetNativeHandle returns NULL, skip processing!");
+        ITRACE("Skip layer index: %u for Hyper DMA buffer sharing",
+               layer_index);
         continue;
       }
 

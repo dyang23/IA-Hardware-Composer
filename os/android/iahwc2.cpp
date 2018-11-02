@@ -1229,14 +1229,14 @@ hwcomposer::NativeDisplay *IAHWC2::HwcDisplay::GetDisplay() {
   return display_;
 }
 
-void IAHWC2::EnableHDCPSessionForDisplay(uint32_t display,
+void IAHWC2::EnableHDCPSessionForDisplay(uint32_t connector,
                                          EHwcsContentType content_type) {
   HWCContentType type = kCONTENT_TYPE0;
   if (content_type == HWCS_CP_CONTENT_TYPE1) {
     type = kCONTENT_TYPE1;
   }
 
-  device_.EnableHDCPSessionForDisplay(display, type);
+  device_.EnableHDCPSessionForDisplay(connector, type);
 }
 
 void IAHWC2::EnableHDCPSessionForAllDisplays(EHwcsContentType content_type) {
@@ -1247,8 +1247,8 @@ void IAHWC2::EnableHDCPSessionForAllDisplays(EHwcsContentType content_type) {
   device_.EnableHDCPSessionForAllDisplays(type);
 }
 
-void IAHWC2::DisableHDCPSessionForDisplay(uint32_t display) {
-  device_.DisableHDCPSessionForDisplay(display);
+void IAHWC2::DisableHDCPSessionForDisplay(uint32_t connector) {
+  device_.DisableHDCPSessionForDisplay(connector);
 }
 
 void IAHWC2::DisableHDCPSessionForAllDisplays() {
@@ -1268,13 +1268,17 @@ void IAHWC2::SetHDCPSRMForAllDisplays(const int8_t *SRM, uint32_t SRMLength) {
   device_.SetHDCPSRMForAllDisplays(SRM, SRMLength);
 }
 
-void IAHWC2::SetHDCPSRMForDisplay(uint32_t display, const int8_t *SRM,
+uint32_t IAHWC2::GetDisplayIDFromConnectorID(const uint32_t connector_id) {
+  return device_.GetDisplayIDFromConnectorID(connector_id);
+}
+
+void IAHWC2::SetHDCPSRMForDisplay(uint32_t connector, const int8_t *SRM,
                                   uint32_t SRMLength) {
   if (SRM == NULL) {
     ETRACE("Error:HDCP Set NULL SRM");
     return;
   }
-  device_.SetHDCPSRMForDisplay(display, SRM, SRMLength);
+  device_.SetHDCPSRMForDisplay(connector, SRM, SRMLength);
 }
 
 }  // namespace android

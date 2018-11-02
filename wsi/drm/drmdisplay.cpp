@@ -466,6 +466,10 @@ void DrmDisplay::SetHDCPSRM(const int8_t *SRM, uint32_t SRMLength) {
   drmModeDestroyPropertyBlob(gpu_fd_, srm_id);
 }
 
+bool DrmDisplay::ContainConnector(const uint32_t connector_id) {
+  return (connector_ == connector_id);
+}
+
 bool DrmDisplay::Commit(
     const DisplayPlaneStateList &composition_planes,
     const DisplayPlaneStateList &previous_composition_planes,
@@ -1002,8 +1006,10 @@ bool DrmDisplay::PopulatePlanes(
       supported_formats[j] = drm_plane->formats[j];
 
     bool use_modifier = true;
-
-    if (plane->Initialize(gpu_fd_, supported_formats, manager_)) {
+#ifdef THREEDIS_UNDERRUN_WA
+    use_modifier = (manager_->GetConnectedPhysicalDisplayCount() < 3);
+#endif
+    if (plane->Initialize(gpu_fd_, supported_formats, use_modifier)) {
       if (plane->type() == DRM_PLANE_TYPE_CURSOR) {
         cursor_plane.reset(plane.release());
       } else {

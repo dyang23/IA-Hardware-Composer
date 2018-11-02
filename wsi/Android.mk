@@ -49,6 +49,7 @@ LOCAL_SHARED_LIBRARIES += \
 	libva
 LOCAL_C_INCLUDES += \
 	$(TARGET_OUT_HEADERS)/libva
+LOCAL_CPPFLAGS += -DVA_WITH_PAVP
 endif
 
 LOCAL_SRC_FILES := \
@@ -86,6 +87,7 @@ LOCAL_CPPFLAGS += \
         -Wall -Wsign-compare -Wpointer-arith \
         -Wcast-qual -Wcast-align \
         -D_GNU_SOURCE=1 -D_FILE_OFFSET_BITS=64 \
+        -Wno-unused-parameter \
         -O3
 
 ifeq ($(strip $(BOARD_USES_VULKAN)), true)
