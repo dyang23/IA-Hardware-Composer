@@ -204,6 +204,9 @@ void OverlayLayer::InitializeState(HwcLayer* layer,
   dataspace_ = layer->GetDataSpace();
   blending_ = layer->GetBlending();
   surface_damage_ = layer->GetLayerDamage();
+
+  solid_color_ = layer->GetSolidColor();
+
   if (previous_layer && layer->HasZorderChanged()) {
     if (previous_layer->actual_composition_ == kGpu) {
       CalculateRect(previous_layer->display_frame_, surface_damage_);
@@ -494,6 +497,7 @@ void OverlayLayer::CloneLayer(const OverlayLayer* layer,
   layer_index_ = z_order;
   z_order_ = z_order;
   blending_ = layer->blending_;
+  solid_color_ = layer->solid_color_;
 }
 
 void OverlayLayer::Dump() {
