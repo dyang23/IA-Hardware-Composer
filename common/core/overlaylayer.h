@@ -278,6 +278,7 @@ struct OverlayLayer {
   uint32_t display_frame_width_ = 0;
   uint32_t display_frame_height_ = 0;
   uint8_t alpha_ = 0xff;
+  uint32_t dataspace_ = 0;
   HwcRect<float> source_crop_;
   HwcRect<int> display_frame_;
   HwcRect<int> surface_damage_;
