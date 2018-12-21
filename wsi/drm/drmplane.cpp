@@ -204,6 +204,10 @@ bool DrmPlane::Initialize(uint32_t gpu_fd, const std::vector<uint32_t>& formats,
 
   // query and store supported modifiers for format, from in_formats
   // property
+  if (!use_modifier) {
+    prefered_modifier_ = DRM_FORMAT_MOD_NONE;
+    return true;
+  }
   uint64_t in_formats_prop_value = 0;
   ret = in_formats_prop_.Initialize(gpu_fd, "IN_FORMATS", plane_props, NULL,
                                     &in_formats_prop_value);
